@@ -12,7 +12,7 @@ def split_to_slices(x):
     return np.array([(x//2**(i*WIDTH)) % (2**WIDTH) for i in range(NUM_SLICES-1, -1, -1)])
 
 def slices_to_uint32(slices):
-    return sum([2**((NUM_SLICES-1-i)*WIDTH)*x for i, x in enumerate(slices)])
+    return int(sum([2**((NUM_SLICES-1-i)*WIDTH)*x for i, x in enumerate(slices)]))
 
 def slices_to_hexarray(slices):
     hexes = [hex(slices_to_uint32(word))[2:] for word in slices]
@@ -231,6 +231,7 @@ circuit = compiler.compile(
         enable_unsafe_features=True,
         use_insecure_key_cache=True,
         insecure_key_cache_location=".keys",
+        dataflow_parallelize=True,
     ),
     verbose=False,
 )
@@ -241,7 +242,7 @@ text = (
     b"Curabitur bibendum, urna eu bibendum egestas, neque augue eleifend odio, et sagittis viverra."
 )
 assert len(text) == 150
-encrypted_evaluation = circuit.encrypt_run_decrypt(text)
+encrypted_evaluation = circuit.encrypt_run_decrypt(np.frombuffer(text, dtype=np.uint8))
 
 print("Encrypted Evaluation: ", slices_to_hexarray(encrypted_evaluation))
 print("    Plain Evaluation: ", slices_to_hexarray(sha256(text)))
